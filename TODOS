@@ -1,0 +1,7 @@
+Validate user input using Zod - [DONE]
+Use Zod's typescript interfaces - [DONE]
+Add swaggar and scalar for API documentation - [DONE]
+Implement JWT authentication
+Gordon Ramsay passwords for security
+Implement ownership for posts
+Create a separate file for HTTP Codes or Use http-status-codes library - [DONE]
