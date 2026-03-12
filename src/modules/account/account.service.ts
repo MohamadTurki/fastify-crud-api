@@ -9,7 +9,7 @@ export class AccountService {
     const { name, email, password } = data
     const hashedPassword = await hashPassword(password)
     const result = await this.pg.query(
-      "INSERT INTO accounts (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email, created_at, updated_at",
+      "INSERT INTO account (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email, created_at, updated_at",
       [name, email, hashedPassword],
     )
     return result.rows[0]
@@ -20,7 +20,7 @@ export class AccountService {
     password: string,
   ): Promise<Omit<UserDto, "password"> | null> {
     const result = await this.pg.query(
-      "SELECT * FROM accounts WHERE email = $1",
+      "SELECT * FROM account WHERE email = $1",
       [email],
     )
     const user = result.rows[0]
@@ -36,14 +36,14 @@ export class AccountService {
 
   async findAll(): Promise<Omit<UserDto, "password">[]> {
     const result = await this.pg.query(
-      "SELECT id, name, email, created_at, updated_at FROM accounts ORDER BY id",
+      "SELECT id, name, email, created_at, updated_at FROM account ORDER BY id",
     )
     return result.rows
   }
 
   async findById(id: number): Promise<Omit<UserDto, "password"> | undefined> {
     const result = await this.pg.query(
-      "SELECT id, name, email, created_at, updated_at FROM accounts WHERE id = $1",
+      "SELECT id, name, email, created_at, updated_at FROM account WHERE id = $1",
       [id],
     )
     return result.rows[0]
@@ -77,20 +77,16 @@ export class AccountService {
     updates.push(`updated_at = CURRENT_TIMESTAMP`)
     values.push(id)
 
-    const query = `UPDATE accounts SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING id, name, email, created_at, updated_at`
+    const query = `UPDATE account SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING id, name, email, created_at, updated_at`
     const result = await this.pg.query(query, values)
     return result.rows[0] || null
   }
 
   async remove(id: number): Promise<boolean> {
     const result: any = await this.pg.query(
-      "DELETE FROM accounts WHERE id = $1",
+      "DELETE FROM account WHERE id = $1",
       [id],
     )
     return result.rowCount > 0
-  }
-
-  async removeAll(): Promise<void> {
-    await this.pg.query("TRUNCATE TABLE accounts RESTART IDENTITY CASCADE")
   }
 }

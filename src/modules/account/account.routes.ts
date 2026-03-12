@@ -1,34 +1,52 @@
 import "@fastify/swagger"
-import type { FastifyInstance } from "fastify"
-import { UserController } from "./account.controller"
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { AccountService } from "./account.service"
 import {
   accountSchema,
   IdAccountSchema,
   UpdateAccountSchema,
+  UpdateUserDto,
+  UserDto,
 } from "./account.schema"
 import { TAGS } from "../../config/tags"
+import { StatusCodes } from "http-status-codes"
 
 export default async function userRoutes(fastify: FastifyInstance) {
   const accountService = new AccountService(fastify.pg)
-  const userController = new UserController(accountService)
 
   fastify.post(
     "/account/register",
     { schema: { tags: [TAGS.ACCOUNT], body: accountSchema } },
-    userController.registerUser,
+    async (request: FastifyRequest<{ Body: UserDto }>, reply: FastifyReply) => {
+      const user = await accountService.register(request.body)
+      return reply.code(StatusCodes.CREATED).send(user)
+    },
   )
 
   fastify.post(
     "/account/login",
     { schema: { tags: [TAGS.ACCOUNT], body: accountSchema } },
-    userController.loginUser,
+    async (request: FastifyRequest<{ Body: UserDto }>, reply: FastifyReply) => {
+      const { email, password } = request.body
+      const user = await accountService.login(email, password)
+
+      if (!user) {
+        return reply
+          .code(StatusCodes.UNAUTHORIZED)
+          .send({ error: "Invalid email or password" })
+      }
+
+      return reply.send(user)
+    },
   )
 
   fastify.get(
     "/account/list",
     { schema: { tags: [TAGS.ACCOUNT] } },
-    userController.getAccounts,
+    async (_request: FastifyRequest, reply: FastifyReply) => {
+      const accounts = await accountService.findAll()
+      return reply.send(accounts)
+    },
   )
 
   fastify.get(
@@ -39,7 +57,17 @@ export default async function userRoutes(fastify: FastifyInstance) {
         tags: [TAGS.ACCOUNT],
       },
     },
-    userController.getUser,
+    async (
+      request: FastifyRequest<{ Params: { id: string } }>,
+      reply: FastifyReply,
+    ) => {
+      const user = await accountService.findById(Number(request.params.id))
+      if (!user)
+        return reply
+          .code(StatusCodes.NOT_FOUND)
+          .send({ error: "User not found" })
+      return reply.send(user)
+    },
   )
 
   fastify.put(
@@ -51,7 +79,23 @@ export default async function userRoutes(fastify: FastifyInstance) {
         tags: [TAGS.ACCOUNT],
       },
     },
-    userController.updateUser,
+    async (
+      request: FastifyRequest<{
+        Params: { id: string }
+        Body: UpdateUserDto
+      }>,
+      reply: FastifyReply,
+    ) => {
+      const updatedUser = await accountService.update(
+        Number(request.params.id),
+        request.body,
+      )
+      if (!updatedUser)
+        return reply
+          .code(StatusCodes.NOT_FOUND)
+          .send({ error: "User not found" })
+      return reply.send(updatedUser)
+    },
   )
 
   fastify.delete(
@@ -62,12 +106,16 @@ export default async function userRoutes(fastify: FastifyInstance) {
         tags: [TAGS.ACCOUNT],
       },
     },
-    userController.deleteUser,
-  )
-
-  fastify.delete(
-    "/account",
-    { schema: { tags: [TAGS.ACCOUNT] } },
-    userController.deleteAccounts,
+    async (
+      request: FastifyRequest<{ Params: { id: string } }>,
+      reply: FastifyReply,
+    ) => {
+      const deleted = await accountService.remove(Number(request.params.id))
+      if (!deleted)
+        return reply
+          .code(StatusCodes.NOT_FOUND)
+          .send({ error: "User not found" })
+      return reply.code(StatusCodes.NO_CONTENT).send()
+    },
   )
 }
