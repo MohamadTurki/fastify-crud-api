@@ -1,55 +1,34 @@
-import { PostgresDb } from "@fastify/postgres"
-import type { PostDto, UpdatePostDto } from "./post.schema"
+import { PostgresDb } from '@fastify/postgres'
+import type { PostDto, PostUpdateDto } from './post.dto'
+import { PostRepository } from './post.repo'
+
+type PostDto = (typeof PostDto)['in']
+type PostUpdateDto = (typeof PostUpdateDto)['in']
 
 export class PostService {
-  constructor(private readonly pg: PostgresDb) {}
+  private readonly postRepo: PostRepository
+
+  constructor(pg: PostgresDb) {
+    this.postRepo = new PostRepository(pg)
+  }
 
   async create(data: PostDto): Promise<PostDto> {
-    const { title, description } = data
-    const result = await this.pg.query(
-      "INSERT INTO post (title, description) VALUES ($1, $2) RETURNING *",
-      [title, description],
-    )
-    return result.rows[0]
+    return this.postRepo.create(data)
   }
 
   async findAll(): Promise<PostDto[]> {
-    const result = await this.pg.query("SELECT * FROM post ORDER BY id")
-    return result.rows
+    return this.postRepo.findAll()
   }
 
   async findById(id: number): Promise<PostDto | undefined> {
-    const result = await this.pg.query("SELECT * FROM post WHERE id = $1", [id])
-    return result.rows[0]
+    return this.postRepo.findById(id)
   }
 
-  async update(id: number, data: UpdatePostDto): Promise<PostDto | null> {
-    const entries = Object.entries(data).filter(
-      ([, value]) => value !== undefined,
-    )
-
-    if (entries.length === 0) {
-      return null
-    }
-
-    const values: Array<string | number> = entries.map(
-      ([, value]) => value as string,
-    )
-    const queryUpdates = entries.map(([key], index) => `${key} = $${index + 1}`)
-    values.push(id)
-    const idPlaceholder = `$${values.length}`
-
-    const result = await this.pg.query(
-      `UPDATE post SET ${queryUpdates.join(", ")} WHERE id = ${idPlaceholder} RETURNING *`,
-      values,
-    )
-    return result.rows[0] ?? null
+  async update(id: number, data: PostUpdateDto): Promise<PostDto | null> {
+    return this.postRepo.update(id, data)
   }
 
   async remove(id: number): Promise<boolean> {
-    const result: any = await this.pg.query("DELETE FROM post WHERE id = $1", [
-      id,
-    ])
-    return result.rowCount > 0
+    return this.postRepo.remove(id)
   }
 }

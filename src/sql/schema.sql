@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS account (
+CREATE TABLE IF NOT EXISTS "user" (
     id SERIAL PRIMARY KEY,
     name text NOT NULL,
     email text UNIQUE,
@@ -11,11 +11,11 @@ CREATE TABLE IF NOT EXISTS post (
     id SERIAL PRIMARY KEY,
     title text NOT NULL,
     description text,
-    account_id INTEGER REFERENCES account(id) UNIQUE,
+    user_id INTEGER REFERENCES "user"(id) UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
-CREATE INDEX IF NOT EXISTS idx_account_email ON account(email);
-CREATE INDEX IF NOT EXISTS idx_post_account_id ON post(account_id);
+CREATE INDEX IF NOT EXISTS idx_user_email ON "user"(email);
+CREATE INDEX IF NOT EXISTS idx_post_user_id ON post(user_id);

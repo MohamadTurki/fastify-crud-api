@@ -10,9 +10,10 @@ import fastifySwagger from "@fastify/swagger"
 import scalarApiReference from "@scalar/fastify-api-reference"
 import { getConnectionString } from "./config/database"
 import postRoutes from "./modules/post/post.routes"
-import accountRoutes from "./modules/account/account.routes"
+import accountRoutes from "./modules/user/user.routes"
+import { env } from "node:process"
 
-const PORT = Number(process.env.PORT) || 4000
+const PORT = Number(env.PORT) || 4000
 
 export async function createApp() {
   const fastify = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>()

@@ -1,5 +1,5 @@
 export const TAGS = {
-  ACCOUNT: "Account",
-  POSTS: "Posts",
-  AUTH: "Auth",
+  ACCOUNT: 'Users',
+  POSTS: 'Posts',
+  AUTH: 'Auth',
 }

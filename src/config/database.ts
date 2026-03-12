@@ -1,4 +1,6 @@
-import { env } from "../utils/env"
+import { env } from '../utils/env'
+
+// TODO: Add support for multiple databases and connection pooling
 
 const { DB_URL } = env
 
